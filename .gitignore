@@ -1,0 +1,27 @@
+# .gitignore for CRD Field Randomizer project
+# Ignore Python cache and virtual environment
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore virtual environments
+venv/
+data-venv/
+
+# Ignore build and distribution folders
+build/
+dist/
+*.spec
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore Excel and output files
+*.xlsx
+*.csv
+
+# Ignore logs and temporary files
+*.log
+*.tmp

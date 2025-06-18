@@ -1,0 +1,3 @@
+([('crd_field_randomizer_gui',
+   '/Users/jacobvanalmelo/code/hannah/dist/crd_field_randomizer_gui',
+   'EXECUTABLE')],)
