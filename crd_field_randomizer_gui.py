@@ -54,27 +54,21 @@ class FieldRandomizerApp:
         self.tooltip_timer = None
 
         def add_tooltip(widget, text):
-            def show_bubble(event=None):
+            def show_bubble():
                 self.tooltip.config(text=text)
                 self.tooltip.update_idletasks()
-                # Default offset from cursor
-                offset_x, offset_y = 16, 24
-                if event:
-                    x = event.x_root - self.root.winfo_rootx() + offset_x
-                    y = event.y_root - self.root.winfo_rooty() + offset_y
-                else:
-                    # fallback: center below widget
-                    x = (
-                        widget.winfo_rootx()
-                        - self.root.winfo_rootx()
-                        + widget.winfo_width() // 2
-                    )
-                    y = (
-                        widget.winfo_rooty()
-                        - self.root.winfo_rooty()
-                        + widget.winfo_height()
-                        + 8
-                    )
+                # Anchor to the widget, not the cursor
+                x = (
+                    widget.winfo_rootx()
+                    - self.root.winfo_rootx()
+                    + widget.winfo_width() // 2
+                )
+                y = (
+                    widget.winfo_rooty()
+                    - self.root.winfo_rooty()
+                    + widget.winfo_height()
+                    + 8
+                )
                 # Clamp to window bounds
                 max_x = self.root.winfo_width() - self.tooltip.winfo_reqwidth() - 10
                 max_y = self.root.winfo_height() - self.tooltip.winfo_reqheight() - 10
@@ -82,24 +76,30 @@ class FieldRandomizerApp:
                 y = max(10, min(y, max_y))
                 self.tooltip.place(x=x, y=y)
                 self.tooltip.lift()
+                self.tooltip.tkraise()  # Always bring to top
 
             def on_enter(event):
                 def delayed_show():
                     self.tooltip_timer = None
-                    show_bubble(event)
+                    show_bubble()
 
-                self.tooltip_timer = self.root.after(2000, delayed_show)
-                widget.bind("<Motion>", show_bubble, add="+")
+                # Always start timer on enter, even if widget is focused/clicked
+                if self.tooltip_timer:
+                    self.root.after_cancel(self.tooltip_timer)
+                self.tooltip_timer = self.root.after(1500, delayed_show)
 
             def on_leave(event):
                 if self.tooltip_timer:
                     self.root.after_cancel(self.tooltip_timer)
                     self.tooltip_timer = None
                 self.tooltip.place_forget()
-                widget.unbind("<Motion>")
 
             widget.bind("<Enter>", on_enter)
             widget.bind("<Leave>", on_leave)
+            # Also show tooltip if widget is focused by keyboard or mouse click
+            widget.bind("<FocusIn>", on_enter)
+            widget.bind("<FocusOut>", on_leave)
+            widget.bind("<Button-1>", on_enter)
 
         # Field Length (in)
         tk.Label(frm, text="Field Length (in)").grid(row=0, column=0, sticky="e")
