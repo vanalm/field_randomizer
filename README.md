@@ -115,44 +115,27 @@ For more details on the NumPy PRNG used, see the official documentation: https:/
 
 ---
 
-## Building a Windows .exe from macOS (Apple Silicon/M1/M2) using Docker and Rosetta 2
+## Building a Windows .exe from macOS (Apple Silicon/M1/M2)
 
-If you need to build a Windows `.exe` on a Mac with Apple Silicon (M1, M2, etc.), you can use Docker with Rosetta 2 to run Intel-based (amd64) containers. This allows you to use the prebuilt PyInstaller+Wine image for cross-compiling, even on ARM Macs.
+**Note:** Building a Windows `.exe` using Docker+Wine is not supported on Apple Silicon (M1/M2) Macs, even with Rosetta 2. You will see errors like `run_wineboot failed to start wineboot`. This is a known limitation.
 
-**Step-by-step:**
+**Recommended solutions:**
 
-1. **Install Docker for Mac:**
-   - Download and install from https://www.docker.com/products/docker-desktop
+1. **Use a Windows VM or real Windows machine**
+   - Use [UTM](https://mac.getutm.app/), [Parallels Desktop](https://www.parallels.com/), or [VirtualBox](https://www.virtualbox.org/) to run Windows on your Mac.
+   - Build your `.exe` using PyInstaller inside the VM.
 
-2. **Install Rosetta 2 (if not already installed):**
-   - Open Terminal and run:
-     ```sh
-     softwareupdate --install-rosetta
-     ```
-   - This is a lightweight Apple tool that allows Intel (x86_64) binaries to run on Apple Silicon.
+2. **Use GitHub Actions (cloud build)**
+   - This repo includes a workflow that builds your `.exe` on every push to `main`.
+   - Download the `.exe` from the GitHub Actions "Artifacts" tab after the build completes.
 
-3. **Open Terminal and navigate to your project folder:**
-   ```sh
-   cd /path/to/field_randomizer
-   ```
+**How to remove Rosetta 2 (if you want to):**
 
-4. **Run the Docker PyInstaller image with the correct platform flag:**
-   ```sh
-   docker run --platform linux/amd64 --rm -v "$PWD":/src cdrx/pyinstaller-windows \
-     "pyinstaller --onefile --windowed crd_field_randomizer_gui.py"
-   ```
-   - The `--platform linux/amd64` flag is required for Apple Silicon to emulate Intel architecture.
-   - This will build the `.exe` inside a Windows emulation environment and place it in your `dist/` folder.
+Rosetta 2 is lightweight and safe to leave installed, but if you want to remove it:
 
-5. **Find your Windows executable:**
-   - The file will be at `dist/crd_field_randomizer_gui.exe`.
-   - Test on a Windows machine before distributing.
-
-**Notes:**
-- This method uses [cdrx/pyinstaller-windows](https://github.com/cdrx/docker-pyinstaller) Docker image.
-- Some advanced GUI features or system calls may not work perfectly; always test the output.
-- For full reliability, a native Windows build is recommended for production.
-- Rosetta 2 is safe and lightweight to leave installed on your Mac.
+```sh
+sudo /usr/sbin/softwareupdate --remove-rosetta
+```
 
 ---
 
