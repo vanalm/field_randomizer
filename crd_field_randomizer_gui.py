@@ -1,6 +1,5 @@
 import os
 import tkinter as tk
-
 from tkinter import filedialog, messagebox
 
 import numpy as np
@@ -84,11 +83,13 @@ class FieldRandomizerApp:
 
         # --- RANDOM SEED ---
 
-        # Random Seed: Integer for reproducible randomization (use any number, or change for a new randomization)
-
-        tk.Label(frm, text="Random Seed").grid(row=5, column=0, sticky="e")
+        # Unique Code (was: Random Seed): Integer for reproducible randomization (use any number, or change for a new randomization)
+        tk.Label(frm, text="Unique Code").grid(row=5, column=0, sticky="e")
         self.seed_var = tk.StringVar(value="42")
-        tk.Entry(frm, textvariable=self.seed_var, width=8).grid(row=5, column=1)
+        seed_entry = tk.Entry(frm, textvariable=self.seed_var, width=8)
+        seed_entry.grid(row=5, column=1)
+        seed_entry.bind("<Enter>", lambda e: self.show_tooltip("A number to ensure a unique, repeatable randomization. Use any number; change for a new layout."))
+        seed_entry.bind("<Leave>", lambda e: self.hide_tooltip())
 
         # --- OUTPUT FILE ---
 
@@ -107,7 +108,7 @@ class FieldRandomizerApp:
             text="Randomize!",
             command=self.run_randomizer,
             bg="#4CAF50",
-            fg="white",
+            fg="black",
             width=15,
         )
         self.run_btn.grid(row=7, column=0, columnspan=3, pady=10)
@@ -115,12 +116,68 @@ class FieldRandomizerApp:
         self.status = tk.Label(frm, text="", fg="blue")
         self.status.grid(row=8, column=0, columnspan=3)
 
+        # Suggest Field Size Button
+        tk.Button(
+            frm,
+            text="Suggest Field Size",
+            command=self.suggest_field_size,
+            bg="#2196F3",
+            fg="black",
+        ).grid(row=9, column=0, columnspan=3, pady=(5, 0))
+
+        # Add tooltips to all fields
+        for widget, tip in [
+            (frm.grid_slaves(row=0, column=1)[0], "Total length of the field in inches (horizontal, along the rows)."),
+            (frm.grid_slaves(row=1, column=1)[0], "Total width of the field in inches (vertical, across the rows)."),
+            (frm.grid_slaves(row=2, column=1)[0], "Distance between plots within a row (inches)."),
+            (frm.grid_slaves(row=3, column=1)[0], "Distance between rows (inches)."),
+            (frm.grid_slaves(row=4, column=1)[0], "Comma-separated list of treatment codes and their replicate counts. Example: A:40,B:40,C:40"),
+            (frm.grid_slaves(row=6, column=1)[0], "Path to save the Excel file. Defaults to your Desktop."),
+        ]:
+            widget.bind("<Enter>", lambda e, t=tip: self.show_tooltip(t))
+            widget.bind("<Leave>", lambda e: self.hide_tooltip())
+
+        # Tooltip label
+        self.tooltip = tk.Label(frm, text="", bg="#ffffe0", fg="black", relief="solid", borderwidth=1, wraplength=300)
+        self.tooltip.place_forget()
+
+    def show_tooltip(self, text):
+        self.tooltip.config(text=text)
+        self.tooltip.place(relx=0, rely=1, anchor="sw")
+
+    def hide_tooltip(self):
+        self.tooltip.place_forget()
+
     def browse_file(self):
         f = filedialog.asksaveasfilename(
             defaultextension=".xlsx", filetypes=[("Excel files", ".xlsx")]
         )
         if f:
             self.outfile_var.set(f)
+
+    def suggest_field_size(self):
+        try:
+            in_row_spacing = float(self.inrow_var.get())
+            between_row_spacing = float(self.between_var.get())
+            treatments = {}
+            for pair in self.treat_var.get().split(","):
+                code, reps = pair.split(":")
+                treatments[code.strip()] = int(reps.strip())
+            total_reps = sum(treatments.values())
+            # Try to keep field width fixed, adjust length
+            field_wid_in = float(self.wid_var.get())
+            rows = int(round(field_wid_in / between_row_spacing))
+            if rows == 0:
+                raise ValueError("Field width or between-row spacing too small.")
+            cols = int(np.ceil(total_reps / rows))
+            new_field_len = cols * in_row_spacing
+            self.len_var.set(str(round(new_field_len, 2)))
+            self.status.config(
+                text=f"Adjusted field length to {round(new_field_len,2)} in to fit {total_reps} plots.",
+                fg="blue",
+            )
+        except Exception as e:
+            self.status.config(text=f"Suggest error: {e}", fg="red")
 
     def run_randomizer(self):
         try:
@@ -134,6 +191,18 @@ class FieldRandomizerApp:
                 treatments[code.strip()] = int(reps.strip())
             rng_seed = int(self.seed_var.get())
             outfile = self.outfile_var.get()
+            rows = int(round(field_wid_in / between_row_spacing))
+            cols = int(round(field_len_in / in_row_spacing))
+            plots = rows * cols
+            total_reps = sum(treatments.values())
+            if total_reps != plots:
+                msg = (
+                    f"Number of plots (rows x cols = {rows} x {cols} = {plots}) does not match total treatment replicates ({total_reps}).\n"
+                    f"You can click 'Suggest Field Size' to auto-adjust the field length, or adjust your treatments/spacing."
+                )
+                self.status.config(text=msg, fg="red")
+                messagebox.showerror("Mismatch", msg)
+                return
             field_map, outpath = randomize_field(
                 field_len_in,
                 field_wid_in,
