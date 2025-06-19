@@ -88,7 +88,12 @@ class FieldRandomizerApp:
         self.seed_var = tk.StringVar(value="42")
         seed_entry = tk.Entry(frm, textvariable=self.seed_var, width=8)
         seed_entry.grid(row=5, column=1)
-        seed_entry.bind("<Enter>", lambda e: self.show_tooltip("A number to ensure a unique, repeatable randomization. Use any number; change for a new layout."))
+        seed_entry.bind(
+            "<Enter>",
+            lambda e: self.show_tooltip(
+                "A number to ensure a unique, repeatable randomization. Use any number; change for a new layout."
+            ),
+        )
         seed_entry.bind("<Leave>", lambda e: self.hide_tooltip())
 
         # --- OUTPUT FILE ---
@@ -127,18 +132,41 @@ class FieldRandomizerApp:
 
         # Add tooltips to all fields
         for widget, tip in [
-            (frm.grid_slaves(row=0, column=1)[0], "Total length of the field in inches (horizontal, along the rows)."),
-            (frm.grid_slaves(row=1, column=1)[0], "Total width of the field in inches (vertical, across the rows)."),
-            (frm.grid_slaves(row=2, column=1)[0], "Distance between plots within a row (inches)."),
+            (
+                frm.grid_slaves(row=0, column=1)[0],
+                "Total length of the field in inches (horizontal, along the rows).",
+            ),
+            (
+                frm.grid_slaves(row=1, column=1)[0],
+                "Total width of the field in inches (vertical, across the rows).",
+            ),
+            (
+                frm.grid_slaves(row=2, column=1)[0],
+                "Distance between plots within a row (inches).",
+            ),
             (frm.grid_slaves(row=3, column=1)[0], "Distance between rows (inches)."),
-            (frm.grid_slaves(row=4, column=1)[0], "Comma-separated list of treatment codes and their replicate counts. Example: A:40,B:40,C:40"),
-            (frm.grid_slaves(row=6, column=1)[0], "Path to save the Excel file. Defaults to your Desktop."),
+            (
+                frm.grid_slaves(row=4, column=1)[0],
+                "Comma-separated list of treatment codes and their replicate counts. Example: A:40,B:40,C:40",
+            ),
+            (
+                frm.grid_slaves(row=6, column=1)[0],
+                "Path to save the Excel file. Defaults to your Desktop.",
+            ),
         ]:
             widget.bind("<Enter>", lambda e, t=tip: self.show_tooltip(t))
             widget.bind("<Leave>", lambda e: self.hide_tooltip())
 
         # Tooltip label
-        self.tooltip = tk.Label(frm, text="", bg="#ffffe0", fg="black", relief="solid", borderwidth=1, wraplength=300)
+        self.tooltip = tk.Label(
+            frm,
+            text="",
+            bg="#ffffe0",
+            fg="black",
+            relief="solid",
+            borderwidth=1,
+            wraplength=300,
+        )
         self.tooltip.place_forget()
 
     def show_tooltip(self, text):
