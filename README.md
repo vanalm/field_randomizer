@@ -115,35 +115,44 @@ For more details on the NumPy PRNG used, see the official documentation: https:/
 
 ---
 
-## Building a Windows .exe from macOS using Docker
+## Building a Windows .exe from macOS (Apple Silicon/M1/M2) using Docker and Rosetta 2
 
-If you need to build a Windows `.exe` on macOS, you can use Docker with a prebuilt PyInstaller+Wine image. This is the simplest cross-platform method, but may not work for all GUI apps. For most CLI and simple Tkinter apps, it is effective.
+If you need to build a Windows `.exe` on a Mac with Apple Silicon (M1, M2, etc.), you can use Docker with Rosetta 2 to run Intel-based (amd64) containers. This allows you to use the prebuilt PyInstaller+Wine image for cross-compiling, even on ARM Macs.
 
 **Step-by-step:**
 
 1. **Install Docker for Mac:**
    - Download and install from https://www.docker.com/products/docker-desktop
 
-2. **Open Terminal and navigate to your project folder:**
+2. **Install Rosetta 2 (if not already installed):**
+   - Open Terminal and run:
+     ```sh
+     softwareupdate --install-rosetta
+     ```
+   - This is a lightweight Apple tool that allows Intel (x86_64) binaries to run on Apple Silicon.
+
+3. **Open Terminal and navigate to your project folder:**
    ```sh
    cd /path/to/field_randomizer
    ```
 
-3. **Run the Docker PyInstaller image:**
+4. **Run the Docker PyInstaller image with the correct platform flag:**
    ```sh
-   docker run --rm -v "$PWD":/src cdrx/pyinstaller-windows \
+   docker run --platform linux/amd64 --rm -v "$PWD":/src cdrx/pyinstaller-windows \
      "pyinstaller --onefile --windowed crd_field_randomizer_gui.py"
    ```
+   - The `--platform linux/amd64` flag is required for Apple Silicon to emulate Intel architecture.
    - This will build the `.exe` inside a Windows emulation environment and place it in your `dist/` folder.
 
-4. **Find your Windows executable:**
+5. **Find your Windows executable:**
    - The file will be at `dist/crd_field_randomizer_gui.exe`.
    - Test on a Windows machine before distributing.
 
 **Notes:**
 - This method uses [cdrx/pyinstaller-windows](https://github.com/cdrx/docker-pyinstaller) Docker image.
 - Some advanced GUI features or system calls may not work perfectly; always test the output.
-- For full reliability, native Windows build is recommended.
+- For full reliability, a native Windows build is recommended for production.
+- Rosetta 2 is safe and lightweight to leave installed on your Mac.
 
 ---
 
